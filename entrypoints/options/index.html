@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Refocus — Options</title>
+    <link rel="stylesheet" href="./options.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Refocus</h1>
+      <nav id="tabs" class="tabs">
+        <button data-tab="rules" class="active">Dedup Rules</button>
+        <button data-tab="hosts">Dedup Hosts</button>
+        <button data-tab="watch-targets">Watch Targets</button>
+        <button data-tab="watch-notifications">Watch Notifications</button>
+        <button data-tab="account">Account</button>
+        <button data-tab="import-export">Import/Export</button>
+      </nav>
+    </header>
+
+    <main>
+      <section id="pane-rules" class="pane"></section>
+      <section id="pane-hosts" class="pane hidden"></section>
+      <section id="pane-watch-targets" class="pane hidden"></section>
+      <section id="pane-watch-notifications" class="pane hidden"></section>
+      <section id="pane-account" class="pane hidden"></section>
+      <section id="pane-import-export" class="pane hidden"></section>
+    </main>
+
+    <div id="modal-root"></div>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
