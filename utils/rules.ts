@@ -1,6 +1,13 @@
-import { matchHostGlob } from './hostGlob';
 import type { Rule } from './types';
 import { safeParse } from './urlGuards';
+
+// Supports "*" (any host), "foo.com" (exact), "*.foo.com" (subdomains of foo.com).
+function matchHostGlob(host: string, glob: string): boolean {
+  if (glob === '*' || glob === host) return true;
+  if (!glob.startsWith('*.')) return false;
+  const suffix = glob.slice(2);
+  return host === suffix || host.endsWith('.' + suffix);
+}
 
 export function matchRule(
   rawUrl: string,

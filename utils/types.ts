@@ -132,7 +132,6 @@ export interface Settings {
     globalEnabled: boolean;
     disabledHosts: string[];
     rules: Rule[];
-    debug: boolean;
     addressBarDedup: boolean;
   };
   watch: {

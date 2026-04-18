@@ -1,5 +1,4 @@
-import type { CanonicalUrl, NormalizerSpec } from '../types';
-import { BUILTINS } from './registry';
+import type { BuiltinId, CanonicalUrl, NormalizerSpec } from '../types';
 
 const TRACKING_PARAMS = new Set([
   'utm_source',
@@ -21,6 +20,47 @@ const TRACKING_PARAMS = new Set([
   'wt_mc',
   'pk_campaign',
 ]);
+
+const GITHUB_PR_RE = /^\/([^/]+)\/([^/]+)\/pull\/(\d+)(?:\/.*)?$/;
+const GITHUB_ISSUE_RE = /^\/([^/]+)\/([^/]+)\/issues\/(\d+)(?:\/.*)?$/;
+const GDOC_RES: Array<[RegExp, string]> = [
+  [/^\/document\/d\/([^/]+)(?:\/.*)?$/, 'document'],
+  [/^\/spreadsheets\/d\/([^/]+)(?:\/.*)?$/, 'spreadsheets'],
+  [/^\/presentation\/d\/([^/]+)(?:\/.*)?$/, 'presentation'],
+];
+const YT_HOSTS = new Set(['www.youtube.com', 'youtube.com', 'm.youtube.com']);
+
+const BUILTINS: Record<BuiltinId, (url: URL) => URL | null> = {
+  'github-pr': (url) => {
+    if (url.host !== 'github.com') return null;
+    const m = GITHUB_PR_RE.exec(url.pathname);
+    return m ? new URL(`https://github.com/${m[1]}/${m[2]}/pull/${m[3]}`) : null;
+  },
+  'github-issue': (url) => {
+    if (url.host !== 'github.com') return null;
+    const m = GITHUB_ISSUE_RE.exec(url.pathname);
+    return m
+      ? new URL(`https://github.com/${m[1]}/${m[2]}/issues/${m[3]}`)
+      : null;
+  },
+  'google-docs': (url) => {
+    if (url.host !== 'docs.google.com') return null;
+    for (const [re, kind] of GDOC_RES) {
+      const m = re.exec(url.pathname);
+      if (m) return new URL(`https://docs.google.com/${kind}/d/${m[1]}/edit`);
+    }
+    return null;
+  },
+  'youtube-video': (url) => {
+    if (url.host === 'youtu.be') {
+      const id = url.pathname.slice(1);
+      return id ? new URL(`https://www.youtube.com/watch?v=${id}`) : null;
+    }
+    if (!YT_HOSTS.has(url.host) || url.pathname !== '/watch') return null;
+    const v = url.searchParams.get('v');
+    return v ? new URL(`https://www.youtube.com/watch?v=${v}`) : null;
+  },
+};
 
 export function canonicalize(
   raw: string,
@@ -46,42 +86,32 @@ function applyStep(url: URL, step: NormalizerSpec): URL | null {
       return url;
 
     case 'stripFragment': {
-      const u = new URL(url.toString());
+      const u = new URL(url.href);
       u.hash = '';
       return u;
     }
 
     case 'stripQuery': {
-      const u = new URL(url.toString());
-      if (!step.except || step.except.length === 0) {
-        u.search = '';
-      } else {
-        const keep = new Set(step.except);
-        const preserved: [string, string][] = [];
-        u.searchParams.forEach((v, k) => {
-          if (keep.has(k)) preserved.push([k, v]);
-        });
-        u.search = '';
-        preserved.forEach(([k, v]) => u.searchParams.append(k, v));
-      }
+      const u = new URL(url.href);
+      const keep = new Set(step.except ?? []);
+      [...u.searchParams.keys()].forEach((k) => {
+        if (!keep.has(k)) u.searchParams.delete(k);
+      });
       return u;
     }
 
     case 'stripTrackingParams': {
-      const u = new URL(url.toString());
-      const toDelete: string[] = [];
-      u.searchParams.forEach((_, k) => {
-        if (TRACKING_PARAMS.has(k)) toDelete.push(k);
+      const u = new URL(url.href);
+      [...u.searchParams.keys()].forEach((k) => {
+        if (TRACKING_PARAMS.has(k)) u.searchParams.delete(k);
       });
-      toDelete.forEach((k) => u.searchParams.delete(k));
       return u;
     }
 
     case 'pathPrefix': {
-      const u = new URL(url.toString());
+      const u = new URL(url.href);
       const parts = u.pathname.split('/').filter(Boolean);
-      const kept = parts.slice(0, step.segments);
-      u.pathname = '/' + kept.join('/');
+      u.pathname = '/' + parts.slice(0, step.segments).join('/');
       return u;
     }
 
@@ -92,8 +122,7 @@ function applyStep(url: URL, step: NormalizerSpec): URL | null {
       } catch {
         return null;
       }
-      const full = url.toString();
-      const m = re.exec(full);
+      const m = re.exec(url.href);
       if (!m) return null;
       let out = step.canonical;
       for (let i = m.length - 1; i >= 0; i--) {
@@ -106,10 +135,7 @@ function applyStep(url: URL, step: NormalizerSpec): URL | null {
       }
     }
 
-    case 'builtin': {
-      const fn = BUILTINS[step.id];
-      if (!fn) return null;
-      return fn(url);
-    }
+    case 'builtin':
+      return BUILTINS[step.id]?.(url) ?? null;
   }
 }

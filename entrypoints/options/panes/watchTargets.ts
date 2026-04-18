@@ -1,6 +1,6 @@
-import { settingsStore } from '@/utils/storage';
+import { updateSettings } from '@/utils/storage';
 import type { Settings } from '@/utils/types';
-import { escapeHtml } from '../ui';
+import { escapeHtml } from '@/utils/html';
 
 const POLL_OPTIONS: Array<30 | 60 | 120 | 300> = [30, 60, 120, 300];
 
@@ -64,19 +64,18 @@ export function renderWatchTargetsPane(root: HTMLElement, settings: Settings) {
     </ul>
   `;
 
-  root.querySelector<HTMLSelectElement>('#poll-interval')!.addEventListener(
-    'change',
-    async (e) => {
+  root
+    .querySelector<HTMLSelectElement>('#poll-interval')!
+    .addEventListener('change', (e) => {
       const val = Number((e.target as HTMLSelectElement).value) as
         | 30
         | 60
         | 120
         | 300;
-      const next = structuredClone(settings);
-      next.watch.pollIntervalSec = val;
-      await settingsStore.setValue(next);
-    },
-  );
+      updateSettings((s) => {
+        s.watch.pollIntervalSec = val;
+      });
+    });
 
   const toggle = (
     id: string,
@@ -84,12 +83,11 @@ export function renderWatchTargetsPane(root: HTMLElement, settings: Settings) {
   ) => {
     root.querySelector<HTMLInputElement>(`#${id}`)!.addEventListener(
       'change',
-      async (e) => {
-        const next = structuredClone(settings);
-        next.watch.autoTargets[field] = (
-          e.target as HTMLInputElement
-        ).checked;
-        await settingsStore.setValue(next);
+      (e) => {
+        const checked = (e.target as HTMLInputElement).checked;
+        updateSettings((s) => {
+          s.watch.autoTargets[field] = checked;
+        });
       },
     );
   };
@@ -113,17 +111,16 @@ export function renderWatchTargetsPane(root: HTMLElement, settings: Settings) {
       }
       prId = resp.prId;
     }
-    const next = structuredClone(settings);
-    if (!next.watch.explicitPrs.includes(prId))
-      next.watch.explicitPrs.push(prId);
-    await settingsStore.setValue(next);
+    await updateSettings((s) => {
+      if (!s.watch.explicitPrs.includes(prId)) s.watch.explicitPrs.push(prId);
+    });
   });
   root.querySelectorAll<HTMLButtonElement>('.remove-pr').forEach((btn) => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', () => {
       const id = btn.dataset.id!;
-      const next = structuredClone(settings);
-      next.watch.explicitPrs = next.watch.explicitPrs.filter((x) => x !== id);
-      await settingsStore.setValue(next);
+      updateSettings((s) => {
+        s.watch.explicitPrs = s.watch.explicitPrs.filter((x) => x !== id);
+      });
     });
   });
 }

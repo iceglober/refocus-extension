@@ -6,6 +6,8 @@ import { diff } from './diff';
 import { dispatch } from './notify';
 import { emptyState, toSnapshot } from './snapshot';
 
+const EVICT_AFTER_MS = 30 * 24 * 60 * 60 * 1000;
+
 export async function runPollCycle(): Promise<void> {
   const [settings, auth, states] = await Promise.all([
     settingsStore.getValue(),
@@ -36,24 +38,17 @@ export async function runPollCycle(): Promise<void> {
     await authStore.setValue({ ...auth, login: viewerLogin });
   }
 
-  const seen = collectPrs(response, settings.watch.autoTargets);
   const nextStates: PrStateMap = { ...states };
-
-  for (const pr of seen) {
+  for (const pr of collectPrs(response, settings.watch.autoTargets)) {
     const snap = toSnapshot(pr);
-    const prev = states[pr.id] ?? emptyState();
-    const { events, nextState } = diff(prev, snap, viewerLogin);
+    const { events, nextState } = diff(states[pr.id] ?? emptyState(), snap, viewerLogin);
     nextStates[pr.id] = nextState;
-    for (const ev of events) {
-      await dispatch(ev);
-    }
+    for (const ev of events) await dispatch(ev);
   }
 
-  // Evict states for PRs we haven't seen in 30 days
-  const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
-  for (const id of Object.keys(nextStates)) {
-    const state = nextStates[id];
-    if (state && state.updatedAt < cutoff) delete nextStates[id];
+  const cutoff = Date.now() - EVICT_AFTER_MS;
+  for (const [id, state] of Object.entries(nextStates)) {
+    if (state.updatedAt < cutoff) delete nextStates[id];
   }
 
   await prStateStore.setValue(nextStates);
@@ -63,18 +58,17 @@ function collectPrs(
   response: GqlResponse,
   auto: { authored: boolean; assigned: boolean; reviewRequested: boolean },
 ): GqlPr[] {
-  const map = new Map<string, GqlPr>();
-  const add = (pr: GqlPr | null | undefined) => {
-    if (pr && pr.id) map.set(pr.id, pr);
-  };
-
   const data = response.data;
   if (!data) return [];
 
+  const map = new Map<string, GqlPr>();
+  const add = (pr: GqlPr | null | undefined) => {
+    if (pr?.id) map.set(pr.id, pr);
+  };
+
   if (auto.authored) data.viewer.pullRequests.nodes.forEach(add);
   if (auto.assigned) data.assigned.nodes.forEach((n) => add(n as GqlPr));
-  if (auto.reviewRequested)
-    data.reviewRequested.nodes.forEach((n) => add(n as GqlPr));
+  if (auto.reviewRequested) data.reviewRequested.nodes.forEach((n) => add(n as GqlPr));
   data.nodes?.forEach((n) => add(n as GqlPr));
 
   return [...map.values()];

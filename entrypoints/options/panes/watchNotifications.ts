@@ -1,7 +1,7 @@
-import { settingsStore } from '@/utils/storage';
+import { updateSettings } from '@/utils/storage';
 import { ALL_EVENT_KINDS } from '@/utils/types';
 import type { PrEventKind, Settings } from '@/utils/types';
-import { escapeHtml } from '../ui';
+import { escapeHtml } from '@/utils/html';
 
 const LABELS: Record<PrEventKind, string> = {
   'checks.passed': 'Checks passed',
@@ -54,31 +54,31 @@ export function renderWatchNotificationsPane(
   `;
 
   root.querySelectorAll<HTMLInputElement>('.evt').forEach((cb) => {
-    cb.addEventListener('change', async () => {
+    cb.addEventListener('change', () => {
       const kind = cb.dataset.kind as PrEventKind;
-      const next = structuredClone(settings);
-      next.watch.notifyOn[kind] = cb.checked;
-      await settingsStore.setValue(next);
+      updateSettings((s) => {
+        s.watch.notifyOn[kind] = cb.checked;
+      });
     });
   });
 
   const muteInput = root.querySelector<HTMLInputElement>('#mute-input')!;
-  root.querySelector('#add-mute')!.addEventListener('click', async () => {
+  root.querySelector('#add-mute')!.addEventListener('click', () => {
     const val = muteInput.value.trim();
     if (!/^[^/]+\/[^/]+$/.test(val)) {
       alert('Repo must be in "owner/repo" form.');
       return;
     }
-    const next = structuredClone(settings);
-    if (!next.watch.repoMutes.includes(val)) next.watch.repoMutes.push(val);
-    await settingsStore.setValue(next);
+    updateSettings((s) => {
+      if (!s.watch.repoMutes.includes(val)) s.watch.repoMutes.push(val);
+    });
   });
   root.querySelectorAll<HTMLButtonElement>('.unmute').forEach((btn) => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', () => {
       const repo = btn.dataset.repo!;
-      const next = structuredClone(settings);
-      next.watch.repoMutes = next.watch.repoMutes.filter((r) => r !== repo);
-      await settingsStore.setValue(next);
+      updateSettings((s) => {
+        s.watch.repoMutes = s.watch.repoMutes.filter((r) => r !== repo);
+      });
     });
   });
 }

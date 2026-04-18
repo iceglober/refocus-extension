@@ -1,5 +1,5 @@
 import { matchRule } from '@/utils/rules';
-import { authStore, prStateStore, settingsStore } from '@/utils/storage';
+import { authStore, prStateStore, settingsStore, updateSettings } from '@/utils/storage';
 import { escapeHtml } from '@/utils/html';
 import { safeParse } from '@/utils/urlGuards';
 
@@ -59,26 +59,26 @@ async function render() {
     </div>
   `;
 
-  document.getElementById('global')!.addEventListener('change', async (e) => {
-    const next = structuredClone(settings);
-    next.dedup.globalEnabled = (e.target as HTMLInputElement).checked;
-    await settingsStore.setValue(next);
+  document.getElementById('global')!.addEventListener('change', (e) => {
+    updateSettings((s) => {
+      s.dedup.globalEnabled = (e.target as HTMLInputElement).checked;
+    });
   });
 
-  document.getElementById('host')!.addEventListener('change', async (e) => {
+  document.getElementById('host')!.addEventListener('change', (e) => {
     const enabled = (e.target as HTMLInputElement).checked;
-    const next = structuredClone(settings);
-    const set = new Set(next.dedup.disabledHosts);
-    if (enabled) set.delete(host);
-    else set.add(host);
-    next.dedup.disabledHosts = [...set];
-    await settingsStore.setValue(next);
+    updateSettings((s) => {
+      const set = new Set(s.dedup.disabledHosts);
+      if (enabled) set.delete(host);
+      else set.add(host);
+      s.dedup.disabledHosts = [...set];
+    });
   });
 
-  document.getElementById('watch')!.addEventListener('change', async (e) => {
-    const next = structuredClone(settings);
-    next.watch.enabled = (e.target as HTMLInputElement).checked;
-    await settingsStore.setValue(next);
+  document.getElementById('watch')!.addEventListener('change', (e) => {
+    updateSettings((s) => {
+      s.watch.enabled = (e.target as HTMLInputElement).checked;
+    });
   });
 
   document.getElementById('options')!.addEventListener('click', (e) => {

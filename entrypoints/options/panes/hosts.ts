@@ -1,6 +1,6 @@
-import { settingsStore } from '@/utils/storage';
+import { updateSettings } from '@/utils/storage';
 import type { Settings } from '@/utils/types';
-import { escapeHtml } from '../ui';
+import { escapeHtml } from '@/utils/html';
 
 export function renderHostsPane(root: HTMLElement, settings: Settings) {
   root.innerHTML = `
@@ -25,13 +25,12 @@ export function renderHostsPane(root: HTMLElement, settings: Settings) {
   `;
 
   const input = root.querySelector<HTMLInputElement>('#host-input')!;
-  const add = async () => {
+  const add = () => {
     const val = input.value.trim().toLowerCase();
     if (!val) return;
-    const next = structuredClone(settings);
-    if (!next.dedup.disabledHosts.includes(val))
-      next.dedup.disabledHosts.push(val);
-    await settingsStore.setValue(next);
+    updateSettings((s) => {
+      if (!s.dedup.disabledHosts.includes(val)) s.dedup.disabledHosts.push(val);
+    });
   };
   root.querySelector('#add-host')!.addEventListener('click', add);
   input.addEventListener('keydown', (e) => {
@@ -39,13 +38,11 @@ export function renderHostsPane(root: HTMLElement, settings: Settings) {
   });
 
   root.querySelectorAll<HTMLButtonElement>('.remove').forEach((btn) => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', () => {
       const host = btn.dataset.host!;
-      const next = structuredClone(settings);
-      next.dedup.disabledHosts = next.dedup.disabledHosts.filter(
-        (h) => h !== host,
-      );
-      await settingsStore.setValue(next);
+      updateSettings((s) => {
+        s.dedup.disabledHosts = s.dedup.disabledHosts.filter((h) => h !== host);
+      });
     });
   });
 }

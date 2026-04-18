@@ -1,13 +1,14 @@
 import { canonicalize } from '@/utils/normalize';
 import { matchRule } from '@/utils/rules';
-import { settingsStore } from '@/utils/storage';
+import { updateSettings } from '@/utils/storage';
 import type {
   BuiltinId,
   NormalizerSpec,
   Rule,
   Settings,
 } from '@/utils/types';
-import { escapeHtml, openModal, randomId } from '../ui';
+import { escapeHtml } from '@/utils/html';
+import { openModal, randomId } from '../ui';
 
 const BUILTIN_IDS: readonly BuiltinId[] = [
   'github-pr',
@@ -79,30 +80,30 @@ export function renderRulesPane(root: HTMLElement, settings: Settings) {
   `;
 
   root.querySelector('#add-rule')!.addEventListener('click', () => {
-    openRuleEditor(null, settings);
+    openRuleEditor(null);
   });
 
   root.querySelectorAll<HTMLTableRowElement>('tbody tr').forEach((row) => {
     const id = row.dataset.id!;
     row.querySelector<HTMLInputElement>('.toggle')!.addEventListener(
       'change',
-      async (e) => {
-        const next = structuredClone(settings);
-        const rule = next.dedup.rules.find((r) => r.id === id);
-        if (!rule) return;
-        rule.enabled = (e.target as HTMLInputElement).checked;
-        await settingsStore.setValue(next);
+      (e) => {
+        const checked = (e.target as HTMLInputElement).checked;
+        updateSettings((s) => {
+          const rule = s.dedup.rules.find((r) => r.id === id);
+          if (rule) rule.enabled = checked;
+        });
       },
     );
     row.querySelector('.edit')!.addEventListener('click', () => {
       const rule = settings.dedup.rules.find((r) => r.id === id);
-      if (rule) openRuleEditor(rule, settings);
+      if (rule) openRuleEditor(rule);
     });
-    row.querySelector('.delete')!.addEventListener('click', async () => {
+    row.querySelector('.delete')!.addEventListener('click', () => {
       if (!confirm('Delete this rule?')) return;
-      const next = structuredClone(settings);
-      next.dedup.rules = next.dedup.rules.filter((r) => r.id !== id);
-      await settingsStore.setValue(next);
+      updateSettings((s) => {
+        s.dedup.rules = s.dedup.rules.filter((r) => r.id !== id);
+      });
     });
   });
 
@@ -124,7 +125,7 @@ export function renderRulesPane(root: HTMLElement, settings: Settings) {
   });
 }
 
-function openRuleEditor(existing: Rule | null, settings: Settings): void {
+function openRuleEditor(existing: Rule | null): void {
   const rule: Rule = existing
     ? structuredClone(existing)
     : {
@@ -331,30 +332,25 @@ function openRuleEditor(existing: Rule | null, settings: Settings): void {
         priority: Number.isFinite(priority) ? priority : 0,
       };
 
-      const next = structuredClone(settings);
-      const idx = next.dedup.rules.findIndex((r) => r.id === updated.id);
-      if (idx >= 0) next.dedup.rules[idx] = updated;
-      else next.dedup.rules.push(updated);
-      await settingsStore.setValue(next);
+      await updateSettings((s) => {
+        const idx = s.dedup.rules.findIndex((r) => r.id === updated.id);
+        if (idx >= 0) s.dedup.rules[idx] = updated;
+        else s.dedup.rules.push(updated);
+      });
     },
   });
 }
 
+const DEFAULT_STEP: { [K in NormalizerSpec['kind']]: NormalizerSpec & { kind: K } } = {
+  identity: { kind: 'identity' },
+  stripFragment: { kind: 'stripFragment' },
+  stripQuery: { kind: 'stripQuery' },
+  stripTrackingParams: { kind: 'stripTrackingParams' },
+  pathPrefix: { kind: 'pathPrefix', segments: 2 },
+  regex: { kind: 'regex', pattern: '', canonical: '' },
+  builtin: { kind: 'builtin', id: 'github-pr' },
+};
+
 function defaultStep(kind: NormalizerSpec['kind']): NormalizerSpec {
-  switch (kind) {
-    case 'identity':
-      return { kind: 'identity' };
-    case 'stripFragment':
-      return { kind: 'stripFragment' };
-    case 'stripQuery':
-      return { kind: 'stripQuery' };
-    case 'stripTrackingParams':
-      return { kind: 'stripTrackingParams' };
-    case 'pathPrefix':
-      return { kind: 'pathPrefix', segments: 2 };
-    case 'regex':
-      return { kind: 'regex', pattern: '', canonical: '' };
-    case 'builtin':
-      return { kind: 'builtin', id: 'github-pr' };
-  }
+  return structuredClone(DEFAULT_STEP[kind]);
 }
