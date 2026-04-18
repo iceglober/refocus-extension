@@ -50,7 +50,7 @@ const REVIEW_META: Record<string, { emoji: string; verb: string }> = {
   CHANGES_REQUESTED: { emoji: '❌', verb: 'requested changes' },
 };
 
-function formatTitle(event: PrEvent): string {
+export function formatTitle(event: PrEvent): string {
   switch (event.kind) {
     case 'checks.passed':    return '✅ Checks passed';
     case 'checks.failed':    return '❌ Checks failed';

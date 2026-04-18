@@ -54,7 +54,7 @@ export async function runPollCycle(): Promise<void> {
   await prStateStore.setValue(nextStates);
 }
 
-function collectPrs(
+export function collectPrs(
   response: GqlResponse,
   auto: { authored: boolean; assigned: boolean; reviewRequested: boolean },
 ): GqlPr[] {
