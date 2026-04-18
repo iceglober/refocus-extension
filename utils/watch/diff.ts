@@ -11,9 +11,7 @@ export function diff(
   snap: PrSnapshot,
   viewerLogin: string,
 ): DiffResult {
-  const events: PrEvent[] = [];
   const now = Date.now();
-  const isFirstObservation = prev.lastSeenSha === '';
 
   const next: PrState = {
     lastSeenSha: snap.sha,
@@ -30,26 +28,17 @@ export function diff(
       : {}),
   };
 
-  // ----- Check rollup transitions -----
-  const shaChanged = !isFirstObservation && prev.lastSeenSha !== snap.sha;
-  if (shaChanged) {
-    delete next.firstPendingAt;
-  }
+  if (prev.lastSeenSha === '') return { events: [], nextState: next };
 
-  if (
-    snap.rollupState === 'PENDING' &&
-    prev.lastRollupState !== 'PENDING' &&
-    !isFirstObservation
-  ) {
+  const events: PrEvent[] = [];
+  if (prev.lastSeenSha !== snap.sha) delete next.firstPendingAt;
+
+  if (snap.rollupState === 'PENDING' && prev.lastRollupState !== 'PENDING') {
     events.push({ kind: 'checks.pending', pr: snap.ref, sha: snap.sha });
     next.firstPendingAt = now;
   }
 
-  if (
-    snap.rollupState === 'SUCCESS' &&
-    prev.lastRollupState !== 'SUCCESS' &&
-    !isFirstObservation
-  ) {
+  if (snap.rollupState === 'SUCCESS' && prev.lastRollupState !== 'SUCCESS') {
     const startAt = next.firstPendingAt;
     const durationMs = startAt ? now - startAt : undefined;
     events.push({
@@ -63,8 +52,7 @@ export function diff(
   if (
     (snap.rollupState === 'FAILURE' || snap.rollupState === 'ERROR') &&
     prev.lastRollupState !== 'FAILURE' &&
-    prev.lastRollupState !== 'ERROR' &&
-    !isFirstObservation
+    prev.lastRollupState !== 'ERROR'
   ) {
     events.push({
       kind: 'checks.failed',
@@ -74,10 +62,9 @@ export function diff(
     });
   }
 
-  // ----- Reviews -----
   const prevReviewSet = new Set(prev.lastReviewIds);
   for (const r of snap.reviews) {
-    if (!prevReviewSet.has(r.id) && !isFirstObservation) {
+    if (!prevReviewSet.has(r.id)) {
       events.push({
         kind: 'review.submitted',
         pr: snap.ref,
@@ -88,51 +75,41 @@ export function diff(
     }
   }
 
-  // ----- Mentions -----
-  const prevMentionSet = new Set(prev.lastMentionCommentIds);
-  const prevCommentSet = new Set(prev.lastCommentIds);
-  const mentionRe = new RegExp(
-    `(?:^|[^a-zA-Z0-9_])@${escapeRegex(viewerLogin)}\\b`,
-    'i',
-  );
-
-  for (const c of snap.comments) {
-    if (prevCommentSet.has(c.id)) continue;
-    if (isFirstObservation) continue;
-    if (c.author.toLowerCase() === viewerLogin.toLowerCase()) continue;
-    if (!viewerLogin) continue;
-    if (!mentionRe.test(c.body)) continue;
-    if (prevMentionSet.has(c.id)) continue;
-    events.push({
-      kind: 'mention',
-      pr: snap.ref,
-      commentId: c.id,
-      commentUrl: c.url,
-      author: c.author,
-    });
-    next.lastMentionCommentIds = [...next.lastMentionCommentIds, c.id].slice(
-      -50,
+  if (viewerLogin) {
+    const prevMentionSet = new Set(prev.lastMentionCommentIds);
+    const prevCommentSet = new Set(prev.lastCommentIds);
+    const mentionRe = new RegExp(
+      `(?:^|[^a-zA-Z0-9_])@${escapeRegex(viewerLogin)}\\b`,
+      'i',
     );
+    const viewerLower = viewerLogin.toLowerCase();
+    for (const c of snap.comments) {
+      if (prevCommentSet.has(c.id)) continue;
+      if (c.author.toLowerCase() === viewerLower) continue;
+      if (!mentionRe.test(c.body)) continue;
+      if (prevMentionSet.has(c.id)) continue;
+      events.push({
+        kind: 'mention',
+        pr: snap.ref,
+        commentId: c.id,
+        commentUrl: c.url,
+        author: c.author,
+      });
+      next.lastMentionCommentIds = [...next.lastMentionCommentIds, c.id].slice(
+        -50,
+      );
+    }
   }
 
-  // ----- Merged / closed -----
-  if (snap.merged && !prev.merged)
-    events.push({ kind: 'merged', pr: snap.ref });
+  if (snap.merged && !prev.merged) events.push({ kind: 'merged', pr: snap.ref });
   if (snap.closed && !snap.merged && !prev.closed)
     events.push({ kind: 'closed', pr: snap.ref });
 
-  // ----- Conflicts -----
-  if (prev.lastMergeable !== null && !isFirstObservation) {
-    if (
-      snap.mergeable === 'CONFLICTING' &&
-      prev.lastMergeable !== 'CONFLICTING'
-    ) {
+  if (prev.lastMergeable !== null) {
+    if (snap.mergeable === 'CONFLICTING' && prev.lastMergeable !== 'CONFLICTING') {
       events.push({ kind: 'conflict.added', pr: snap.ref });
     }
-    if (
-      snap.mergeable === 'MERGEABLE' &&
-      prev.lastMergeable === 'CONFLICTING'
-    ) {
+    if (snap.mergeable === 'MERGEABLE' && prev.lastMergeable === 'CONFLICTING') {
       events.push({ kind: 'conflict.cleared', pr: snap.ref });
     }
   }

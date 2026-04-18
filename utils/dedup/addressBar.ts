@@ -1,9 +1,7 @@
-import { canonicalize } from '../normalize';
-import { isDisabledHost, matchRule } from '../rules';
 import { settingsStore } from '../storage';
-import { isInternalUrl, isNewTabPage } from '../urlGuards';
 import { findExistingTab } from './findExisting';
 import { focus } from './focus';
+import { prepareDedup } from './prepare';
 
 async function handleAddressBarNav(details: {
   tabId: number;
@@ -13,12 +11,7 @@ async function handleAddressBarNav(details: {
   if (details.frameId !== 0) return;
 
   const settings = await settingsStore.getValue();
-  if (!settings.dedup.globalEnabled) return;
   if (!settings.dedup.addressBarDedup) return;
-
-  const url = details.url;
-  if (!url || isInternalUrl(url) || isNewTabPage(url)) return;
-  if (isDisabledHost(url, settings.dedup.disabledHosts)) return;
 
   let tab;
   try {
@@ -26,16 +19,14 @@ async function handleAddressBarNav(details: {
   } catch {
     return;
   }
-  if (tab.pinned) return;
 
-  const rule = matchRule(url, settings.dedup.rules);
-  if (!rule) return;
+  const prep = prepareDedup(details.url, tab.pinned ?? false, settings);
+  if (!prep) return;
 
-  const canonical = canonicalize(url, rule.pipeline);
   const existing = await findExistingTab({
-    canonical,
-    pipeline: rule.pipeline,
-    scope: rule.scope,
+    canonical: prep.canonical,
+    pipeline: prep.rule.pipeline,
+    scope: prep.rule.scope,
     excludeTabId: details.tabId,
     incognito: tab.incognito,
     windowId: tab.windowId ?? -1,

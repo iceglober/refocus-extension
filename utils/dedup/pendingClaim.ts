@@ -22,10 +22,6 @@ export const pendingDedup = {
   release(canonical: CanonicalUrl) {
     claims.delete(canonical);
   },
-  // test-only
-  _size() {
-    return claims.size;
-  },
   _clear() {
     claims.clear();
   },

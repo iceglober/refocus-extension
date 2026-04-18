@@ -61,7 +61,6 @@ export const DEFAULT_SETTINGS: Settings = {
       reviewRequested: true,
     },
     explicitPrs: [],
-    explicitRepos: [],
     notifyOn: DEFAULT_NOTIFY_ON,
     repoMutes: [],
   },

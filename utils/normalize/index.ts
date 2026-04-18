@@ -43,7 +43,7 @@ export function canonicalize(
 function applyStep(url: URL, step: NormalizerSpec): URL | null {
   switch (step.kind) {
     case 'identity':
-      return new URL(url.toString());
+      return url;
 
     case 'stripFragment': {
       const u = new URL(url.toString());

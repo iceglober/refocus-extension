@@ -9,7 +9,7 @@ export function matchRule(
   const url = safeParse(rawUrl);
   if (!url) return null;
 
-  const sorted = [...rules]
+  const sorted = rules
     .filter((r) => r.enabled)
     .sort((a, b) => b.priority - a.priority);
 

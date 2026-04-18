@@ -62,31 +62,6 @@ export function renderWatchTargetsPane(root: HTMLElement, settings: Settings) {
         )
         .join('')}
     </ul>
-
-    <h2>Explicit Repos</h2>
-    <div class="row">
-      <input id="repo-input" type="text" placeholder="owner/repo" style="flex:1" />
-      <select id="repo-filter">
-        <option value="all">All PRs</option>
-        <option value="involving-me">Only involving me</option>
-      </select>
-      <button id="add-repo" class="primary">Add</button>
-    </div>
-    <ul class="list">
-      ${watch.explicitRepos
-        .map(
-          (r) => `
-        <li>
-          <code style="flex:1">${escapeHtml(r.repo)}</code>
-          <span class="muted">${escapeHtml(r.filter)}</span>
-          <button class="remove-repo danger" data-repo="${escapeHtml(
-            r.repo,
-          )}">Remove</button>
-        </li>
-      `,
-        )
-        .join('')}
-    </ul>
   `;
 
   root.querySelector<HTMLSelectElement>('#poll-interval')!.addEventListener(
@@ -148,34 +123,6 @@ export function renderWatchTargetsPane(root: HTMLElement, settings: Settings) {
       const id = btn.dataset.id!;
       const next = structuredClone(settings);
       next.watch.explicitPrs = next.watch.explicitPrs.filter((x) => x !== id);
-      await settingsStore.setValue(next);
-    });
-  });
-
-  const repoInput = root.querySelector<HTMLInputElement>('#repo-input')!;
-  const repoFilter = root.querySelector<HTMLSelectElement>('#repo-filter')!;
-  root.querySelector('#add-repo')!.addEventListener('click', async () => {
-    const val = repoInput.value.trim();
-    if (!/^[^/]+\/[^/]+$/.test(val)) {
-      alert('Repo must be in "owner/repo" form.');
-      return;
-    }
-    const next = structuredClone(settings);
-    if (!next.watch.explicitRepos.find((r) => r.repo === val)) {
-      next.watch.explicitRepos.push({
-        repo: val,
-        filter: repoFilter.value as 'all' | 'involving-me',
-      });
-    }
-    await settingsStore.setValue(next);
-  });
-  root.querySelectorAll<HTMLButtonElement>('.remove-repo').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const repo = btn.dataset.repo!;
-      const next = structuredClone(settings);
-      next.watch.explicitRepos = next.watch.explicitRepos.filter(
-        (r) => r.repo !== repo,
-      );
       await settingsStore.setValue(next);
     });
   });

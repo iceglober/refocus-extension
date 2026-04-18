@@ -61,13 +61,13 @@ function format(event: PrEvent): { title: string; message: string } {
         title: `⏳ Checks running · ${prTag}`,
         message: truncate(event.pr.title),
       };
-    case 'review.submitted':
+    case 'review.submitted': {
+      const { emoji, verb } = reviewMeta(event.state);
       return {
-        title: `${reviewEmoji(event.state)} ${event.reviewer} ${reviewVerb(
-          event.state,
-        )} · ${prTag}`,
+        title: `${emoji} ${event.reviewer} ${verb} · ${prTag}`,
         message: truncate(event.pr.title),
       };
+    }
     case 'merged':
       return {
         title: `🎉 Merged · ${prTag}`,
@@ -100,15 +100,12 @@ function truncate(s: string, max = 80): string {
   return s.length > max ? s.slice(0, max - 1) + '…' : s;
 }
 
-function reviewEmoji(s: string) {
-  return s === 'APPROVED' ? '✅' : s === 'CHANGES_REQUESTED' ? '❌' : '💬';
-}
-function reviewVerb(s: string) {
-  return s === 'APPROVED'
-    ? 'approved'
-    : s === 'CHANGES_REQUESTED'
-    ? 'requested changes'
-    : 'commented';
+const REVIEW_META: Record<string, { emoji: string; verb: string }> = {
+  APPROVED: { emoji: '✅', verb: 'approved' },
+  CHANGES_REQUESTED: { emoji: '❌', verb: 'requested changes' },
+};
+function reviewMeta(s: string): { emoji: string; verb: string } {
+  return REVIEW_META[s] ?? { emoji: '💬', verb: 'commented' };
 }
 
 export function registerNotificationHandlers(): void {

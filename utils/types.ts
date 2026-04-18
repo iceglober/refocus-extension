@@ -145,7 +145,6 @@ export interface Settings {
       reviewRequested: boolean;
     };
     explicitPrs: string[];
-    explicitRepos: Array<{ repo: string; filter: 'all' | 'involving-me' }>;
     notifyOn: Record<PrEventKind, boolean>;
     repoMutes: string[];
     oauthClientId?: string;

@@ -1,23 +1,9 @@
-export function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (ch) =>
-    ch === '&'
-      ? '&amp;'
-      : ch === '<'
-      ? '&lt;'
-      : ch === '>'
-      ? '&gt;'
-      : ch === '"'
-      ? '&quot;'
-      : '&#39;',
-  );
-}
+import { escapeHtml } from '@/utils/html';
+
+export { escapeHtml };
 
 export function randomId(): string {
-  return (
-    'id-' +
-    Math.random().toString(36).slice(2, 10) +
-    Date.now().toString(36).slice(-4)
-  );
+  return 'id-' + crypto.randomUUID();
 }
 
 type ModalArgs = {
@@ -69,8 +55,4 @@ export function openModal({
     }
   });
   return close;
-}
-
-export function confirmDialog(message: string): boolean {
-  return confirm(message);
 }

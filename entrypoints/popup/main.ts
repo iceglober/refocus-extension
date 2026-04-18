@@ -1,19 +1,7 @@
 import { matchRule } from '@/utils/rules';
 import { authStore, prStateStore, settingsStore } from '@/utils/storage';
-
-function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (ch) =>
-    ch === '&'
-      ? '&amp;'
-      : ch === '<'
-      ? '&lt;'
-      : ch === '>'
-      ? '&gt;'
-      : ch === '"'
-      ? '&quot;'
-      : '&#39;',
-  );
-}
+import { escapeHtml } from '@/utils/html';
+import { safeParse } from '@/utils/urlGuards';
 
 async function render() {
   const app = document.getElementById('app')!;
@@ -26,12 +14,7 @@ async function render() {
   const tab = activeTabs[0];
 
   const url = tab?.url ?? '';
-  let host = '';
-  try {
-    host = url ? new URL(url).host : '';
-  } catch {
-    /* ignore */
-  }
+  const host = url ? safeParse(url)?.host ?? '' : '';
   const hostDisabled = settings.dedup.disabledHosts.includes(host);
   const rule = url ? matchRule(url, settings.dedup.rules) : null;
   const watchedCount = Object.keys(prState).length;
