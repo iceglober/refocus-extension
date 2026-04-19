@@ -20,7 +20,13 @@ test('rules pane lists default rules', async ({ context, extensionId }) => {
 
   const rows = page.locator('#pane-rules tbody tr');
   await expect(rows).toHaveCount(3);
-  await expect(rows).toContainText(['GitHub Pull Requests', 'GitHub Issues']);
+
+  const names = page.locator('#pane-rules tbody tr td:nth-child(2)');
+  await expect(names).toContainText([
+    'GitHub Issues',
+    'GitHub Pull Requests',
+    'Exact URL match',
+  ]);
 });
 
 test('switching tabs shows the target pane', async ({ context, extensionId }) => {
