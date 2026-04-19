@@ -1,10 +1,32 @@
 import { storage } from 'wxt/storage';
-import { DEFAULT_SETTINGS } from './defaults';
-import type { Auth, PrStateMap, Settings } from './types';
+import {
+  DEFAULT_FLOATING_ICON,
+  DEFAULT_GROUPS,
+  DEFAULT_SETTINGS,
+  DEFAULT_STALE,
+  DEFAULT_SUSPEND,
+} from './defaults';
+import type {
+  Auth,
+  PrStateMap,
+  Settings,
+  StaleNotifiedMap,
+  TabActivityMap,
+} from './types';
 
 export const settingsStore = storage.defineItem<Settings>('sync:settings', {
   fallback: DEFAULT_SETTINGS,
-  version: 1,
+  version: 2,
+  migrations: {
+    2: (prev: Record<string, unknown>) => ({
+      ...prev,
+      schemaVersion: 2,
+      suspend: prev.suspend ?? DEFAULT_SUSPEND,
+      stale: prev.stale ?? DEFAULT_STALE,
+      groups: prev.groups ?? DEFAULT_GROUPS,
+      floatingIcon: prev.floatingIcon ?? DEFAULT_FLOATING_ICON,
+    }),
+  },
 });
 
 export const authStore = storage.defineItem<Auth>('local:auth', {
@@ -14,6 +36,16 @@ export const authStore = storage.defineItem<Auth>('local:auth', {
 export const prStateStore = storage.defineItem<PrStateMap>('local:prState', {
   fallback: {},
 });
+
+export const tabActivityStore = storage.defineItem<TabActivityMap>(
+  'local:tabActivity',
+  { fallback: {} },
+);
+
+export const staleNotifiedStore = storage.defineItem<StaleNotifiedMap>(
+  'local:staleNotified',
+  { fallback: {} },
+);
 
 export async function updateSettings(
   mutator: (settings: Settings) => void,
