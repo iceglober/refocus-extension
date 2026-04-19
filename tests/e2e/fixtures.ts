@@ -23,12 +23,15 @@ export const test = base.extend<Fixtures>({
   // oxlint-disable-next-line no-empty-pattern -- Playwright requires object destructure
   context: async ({}, use) => {
     const userDataDir = mkdtempSync(join(tmpdir(), 'refocus-e2e-'));
+    // MV3 extension service workers don't reliably spawn in headless mode,
+    // so run headful under xvfb (CI) or a real display (local).
     const context = await chromium.launchPersistentContext(userDataDir, {
-      headless: true,
+      headless: false,
       args: [
         `--disable-extensions-except=${EXT_PATH}`,
         `--load-extension=${EXT_PATH}`,
         '--no-sandbox',
+        '--disable-dev-shm-usage',
       ],
     });
     await use(context);
@@ -37,7 +40,7 @@ export const test = base.extend<Fixtures>({
 
   background: async ({ context }, use) => {
     let [sw] = context.serviceWorkers();
-    if (!sw) sw = await context.waitForEvent('serviceworker');
+    if (!sw) sw = await context.waitForEvent('serviceworker', { timeout: 20_000 });
     await use(sw);
   },
 
