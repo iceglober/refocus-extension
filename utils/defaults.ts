@@ -48,7 +48,6 @@ export const DEFAULT_SETTINGS: Settings = {
     globalEnabled: true,
     disabledHosts: [],
     rules: DEFAULT_RULES,
-    debug: false,
     addressBarDedup: false,
   },
   watch: {
@@ -61,7 +60,6 @@ export const DEFAULT_SETTINGS: Settings = {
       reviewRequested: true,
     },
     explicitPrs: [],
-    explicitRepos: [],
     notifyOn: DEFAULT_NOTIFY_ON,
     repoMutes: [],
   },

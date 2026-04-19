@@ -18,17 +18,8 @@ export function isInternalUrl(url: string): boolean {
     const u = new URL(url);
     return INTERNAL_SCHEMES.some((s) => u.protocol === s);
   } catch {
-    return true; // unparseable → treat as internal (don't touch)
+    return true;
   }
-}
-
-export function isNewTabPage(url: string): boolean {
-  return (
-    url === 'chrome://newtab/' ||
-    url === 'edge://newtab/' ||
-    url === 'about:newtab' ||
-    url === 'about:blank'
-  );
 }
 
 export function safeParse(url: string): URL | null {

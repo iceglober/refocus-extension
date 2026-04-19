@@ -1,7 +1,7 @@
 import { setPat, signOut, startOAuthFlow } from '@/utils/github/auth';
-import { authStore, settingsStore } from '@/utils/storage';
+import { authStore, updateSettings } from '@/utils/storage';
 import type { Settings } from '@/utils/types';
-import { escapeHtml } from '../ui';
+import { escapeHtml } from '@/utils/html';
 
 export async function renderAccountPane(root: HTMLElement, settings: Settings) {
   const auth = await authStore.getValue();
@@ -38,18 +38,19 @@ export async function renderAccountPane(root: HTMLElement, settings: Settings) {
     `;
 
     const apiBase = root.querySelector<HTMLInputElement>('#api-base')!;
-    apiBase.addEventListener('change', async () => {
-      const next = structuredClone(settings);
-      next.watch.apiBaseUrl = apiBase.value.trim() || 'https://api.github.com';
-      await settingsStore.setValue(next);
+    apiBase.addEventListener('change', () => {
+      updateSettings((s) => {
+        s.watch.apiBaseUrl = apiBase.value.trim() || 'https://api.github.com';
+      });
     });
 
     root.querySelector<HTMLInputElement>('#oauth-client')!.addEventListener(
       'change',
-      async (e) => {
-        const next = structuredClone(settings);
-        next.watch.oauthClientId = (e.target as HTMLInputElement).value.trim();
-        await settingsStore.setValue(next);
+      (e) => {
+        const val = (e.target as HTMLInputElement).value.trim();
+        updateSettings((s) => {
+          s.watch.oauthClientId = val;
+        });
       },
     );
 
@@ -104,10 +105,11 @@ export async function renderAccountPane(root: HTMLElement, settings: Settings) {
 
   root.querySelector<HTMLInputElement>('#watch-enabled')!.addEventListener(
     'change',
-    async (e) => {
-      const next = structuredClone(settings);
-      next.watch.enabled = (e.target as HTMLInputElement).checked;
-      await settingsStore.setValue(next);
+    (e) => {
+      const checked = (e.target as HTMLInputElement).checked;
+      updateSettings((s) => {
+        s.watch.enabled = checked;
+      });
     },
   );
 

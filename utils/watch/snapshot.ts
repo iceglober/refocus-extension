@@ -55,26 +55,18 @@ export function toSnapshot(pr: GqlPr): PrSnapshot {
   };
 }
 
+const FAILING_CHECK = new Set(['FAILURE', 'TIMED_OUT', 'CANCELLED']);
+const FAILING_STATUS = new Set(['FAILURE', 'ERROR']);
+
 function extractFailing(
   rollup: GqlPr['commits']['nodes'][number]['commit']['statusCheckRollup'],
 ): string[] {
   if (!rollup) return [];
-  const out: string[] = [];
-  for (const ctx of rollup.contexts.nodes) {
-    if (ctx.__typename === 'CheckRun') {
-      if (
-        ctx.conclusion === 'FAILURE' ||
-        ctx.conclusion === 'TIMED_OUT' ||
-        ctx.conclusion === 'CANCELLED'
-      ) {
-        out.push(ctx.name);
-      }
-    } else if (ctx.__typename === 'StatusContext') {
-      if (ctx.state === 'FAILURE' || ctx.state === 'ERROR')
-        out.push(ctx.context);
-    }
-  }
-  return out;
+  return rollup.contexts.nodes.flatMap((ctx) => {
+    if (ctx.__typename === 'CheckRun')
+      return FAILING_CHECK.has(ctx.conclusion ?? '') ? [ctx.name] : [];
+    return FAILING_STATUS.has(ctx.state) ? [ctx.context] : [];
+  });
 }
 
 export function emptyState(): PrState {

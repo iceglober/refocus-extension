@@ -14,3 +14,12 @@ export const authStore = storage.defineItem<Auth>('local:auth', {
 export const prStateStore = storage.defineItem<PrStateMap>('local:prState', {
   fallback: {},
 });
+
+export async function updateSettings(
+  mutator: (settings: Settings) => void,
+): Promise<void> {
+  const settings = await settingsStore.getValue();
+  const next = structuredClone(settings);
+  mutator(next);
+  await settingsStore.setValue(next);
+}

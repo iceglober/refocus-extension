@@ -33,9 +33,9 @@ export function renderImportExportPane(root: HTMLElement, settings: Settings) {
     URL.revokeObjectURL(url);
   });
 
-  root.querySelector('#reset')!.addEventListener('click', async () => {
+  root.querySelector('#reset')!.addEventListener('click', () => {
     if (!confirm('Reset all settings to defaults?')) return;
-    await settingsStore.setValue(DEFAULT_SETTINGS);
+    settingsStore.setValue(DEFAULT_SETTINGS);
   });
 
   const fileInput = root.querySelector<HTMLInputElement>('#import-file')!;

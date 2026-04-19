@@ -30,7 +30,6 @@ const mockSettings = {
         priority: 100,
       },
     ],
-    debug: false,
     addressBarDedup: false,
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

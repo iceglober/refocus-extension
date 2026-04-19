@@ -27,9 +27,14 @@ export async function dispatch(event: PrEvent): Promise<void> {
   if (now - last < PER_PR_WINDOW_MS) return;
   perPrLastFire.set(event.pr.id, now);
 
-  const { title, message } = format(event);
-  const notifId = `refocus:${event.pr.id}:${event.kind}:${now}`;
+  const prTag = `${event.pr.repo}#${event.pr.number}`;
+  const title = `${formatTitle(event)} · ${prTag}`;
+  const message =
+    event.kind === 'checks.failed'
+      ? `${truncate(event.pr.title)}\n${event.failing.slice(0, 3).join(', ')}`
+      : truncate(event.pr.title);
 
+  const notifId = `refocus:${event.pr.id}:${event.kind}:${now}`;
   await browser.notifications.create(notifId, {
     type: 'basic',
     iconUrl: browser.runtime.getURL('/icon/128.png'),
@@ -37,78 +42,33 @@ export async function dispatch(event: PrEvent): Promise<void> {
     message,
     contextMessage: event.pr.repo,
   });
-
   await park(notifId, event.pr.url);
 }
 
-function format(event: PrEvent): { title: string; message: string } {
-  const prTag = `${event.pr.repo}#${event.pr.number}`;
+const REVIEW_META: Record<string, { emoji: string; verb: string }> = {
+  APPROVED: { emoji: '✅', verb: 'approved' },
+  CHANGES_REQUESTED: { emoji: '❌', verb: 'requested changes' },
+};
+
+export function formatTitle(event: PrEvent): string {
   switch (event.kind) {
-    case 'checks.passed':
-      return {
-        title: `✅ Checks passed · ${prTag}`,
-        message: truncate(event.pr.title),
-      };
-    case 'checks.failed':
-      return {
-        title: `❌ Checks failed · ${prTag}`,
-        message: `${truncate(event.pr.title)}\n${event.failing
-          .slice(0, 3)
-          .join(', ')}`,
-      };
-    case 'checks.pending':
-      return {
-        title: `⏳ Checks running · ${prTag}`,
-        message: truncate(event.pr.title),
-      };
-    case 'review.submitted':
-      return {
-        title: `${reviewEmoji(event.state)} ${event.reviewer} ${reviewVerb(
-          event.state,
-        )} · ${prTag}`,
-        message: truncate(event.pr.title),
-      };
-    case 'merged':
-      return {
-        title: `🎉 Merged · ${prTag}`,
-        message: truncate(event.pr.title),
-      };
-    case 'closed':
-      return {
-        title: `🚫 Closed · ${prTag}`,
-        message: truncate(event.pr.title),
-      };
-    case 'conflict.added':
-      return {
-        title: `⚠️ Conflicts · ${prTag}`,
-        message: truncate(event.pr.title),
-      };
-    case 'conflict.cleared':
-      return {
-        title: `✅ Conflicts resolved · ${prTag}`,
-        message: truncate(event.pr.title),
-      };
-    case 'mention':
-      return {
-        title: `💬 ${event.author} mentioned you · ${prTag}`,
-        message: truncate(event.pr.title),
-      };
+    case 'checks.passed':    return '✅ Checks passed';
+    case 'checks.failed':    return '❌ Checks failed';
+    case 'checks.pending':   return '⏳ Checks running';
+    case 'merged':           return '🎉 Merged';
+    case 'closed':           return '🚫 Closed';
+    case 'conflict.added':   return '⚠️ Conflicts';
+    case 'conflict.cleared': return '✅ Conflicts resolved';
+    case 'mention':          return `💬 ${event.author} mentioned you`;
+    case 'review.submitted': {
+      const m = REVIEW_META[event.state] ?? { emoji: '💬', verb: 'commented' };
+      return `${m.emoji} ${event.reviewer} ${m.verb}`;
+    }
   }
 }
 
 function truncate(s: string, max = 80): string {
   return s.length > max ? s.slice(0, max - 1) + '…' : s;
-}
-
-function reviewEmoji(s: string) {
-  return s === 'APPROVED' ? '✅' : s === 'CHANGES_REQUESTED' ? '❌' : '💬';
-}
-function reviewVerb(s: string) {
-  return s === 'APPROVED'
-    ? 'approved'
-    : s === 'CHANGES_REQUESTED'
-    ? 'requested changes'
-    : 'commented';
 }
 
 export function registerNotificationHandlers(): void {
@@ -127,7 +87,6 @@ export function registerNotificationHandlers(): void {
     },
   );
   browser.notifications.onClosed.addListener((notifId) => {
-    // Fire-and-forget cleanup
     browser.storage.session.remove(`notif:${notifId}`).catch(() => {});
   });
 }

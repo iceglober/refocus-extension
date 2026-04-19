@@ -132,7 +132,6 @@ export interface Settings {
     globalEnabled: boolean;
     disabledHosts: string[];
     rules: Rule[];
-    debug: boolean;
     addressBarDedup: boolean;
   };
   watch: {
@@ -145,7 +144,6 @@ export interface Settings {
       reviewRequested: boolean;
     };
     explicitPrs: string[];
-    explicitRepos: Array<{ repo: string; filter: 'all' | 'involving-me' }>;
     notifyOn: Record<PrEventKind, boolean>;
     repoMutes: string[];
     oauthClientId?: string;

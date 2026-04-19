@@ -1,7 +1,9 @@
 name: CI
 on: [push, pull_request]
+
 jobs:
-  test:
+  lint-compile-unit:
+    name: Lint + Compile + Unit tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -9,8 +11,28 @@ jobs:
         with: { version: 9 }
       - uses: actions/setup-node@v4
         with: { node-version: 20, cache: pnpm }
-      - run: pnpm install
+      - run: pnpm install --frozen-lockfile
       - run: pnpm compile
       - run: pnpm lint
       - run: pnpm test
       - run: pnpm build
+
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm build
+      - run: xvfb-run -a pnpm test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7
