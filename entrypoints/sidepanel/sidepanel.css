@@ -1,0 +1,30 @@
+body {
+  max-width: 100%;
+  padding: 12px;
+  font-size: 13px;
+}
+
+h1 {
+  font-size: 18px;
+  margin: 0 0 8px;
+}
+
+h2 {
+  font-size: 14px;
+  margin: 12px 0 6px;
+}
+
+.tabs {
+  gap: 2px;
+}
+
+.tabs button {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.modal {
+  min-width: 280px;
+  max-width: 100%;
+  padding: 12px;
+}

@@ -52,7 +52,7 @@ export function renderImportExportPane(root: HTMLElement, settings: Settings) {
     if (!raw) return;
     try {
       const parsed = JSON.parse(raw) as Settings;
-      if (parsed.schemaVersion !== 1)
+      if (parsed.schemaVersion !== 3)
         throw new Error(`Unsupported schemaVersion: ${parsed.schemaVersion}`);
       if (!confirm('Overwrite current settings?')) return;
       await settingsStore.setValue(parsed);

@@ -1,15 +1,14 @@
 import { settingsStore } from '@/utils/storage';
 import type { Settings } from '@/utils/types';
-import { renderAccountPane } from './panes/account';
-import { renderCommandPalettePane } from './panes/commandPalette';
-import { renderGroupsPane } from './panes/groups';
-import { renderHostsPane } from './panes/hosts';
-import { renderImportExportPane } from './panes/importExport';
-import { renderRulesPane } from './panes/rules';
-import { renderStalePane } from './panes/stale';
-import { renderSuspendPane } from './panes/suspend';
-import { renderWatchNotificationsPane } from './panes/watchNotifications';
-import { renderWatchTargetsPane } from './panes/watchTargets';
+import { renderAccountPane } from '../options/panes/account';
+import { renderGroupsPane } from '../options/panes/groups';
+import { renderHostsPane } from '../options/panes/hosts';
+import { renderImportExportPane } from '../options/panes/importExport';
+import { renderRulesPane } from '../options/panes/rules';
+import { renderStalePane } from '../options/panes/stale';
+import { renderSuspendPane } from '../options/panes/suspend';
+import { renderWatchNotificationsPane } from '../options/panes/watchNotifications';
+import { renderWatchTargetsPane } from '../options/panes/watchTargets';
 
 type Renderer = (el: HTMLElement, s: Settings) => void | Promise<void>;
 
@@ -21,7 +20,6 @@ const PANES: Record<string, Renderer> = {
   suspend: renderSuspendPane,
   stale: renderStalePane,
   groups: renderGroupsPane,
-  'command-palette': renderCommandPalettePane,
   account: renderAccountPane,
   'import-export': renderImportExportPane,
 };

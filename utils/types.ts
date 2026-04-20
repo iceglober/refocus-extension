@@ -123,11 +123,91 @@ export interface PrState {
 export type PrStateMap = Record<string, PrState>;
 
 // ============================================================================
+// Tab lifecycle
+// ============================================================================
+
+export interface SuspendSettings {
+  enabled: boolean;
+  idleMinutes: 15 | 30 | 60 | 120 | 240;
+  exemptHosts: string[];
+  suspendPinned: boolean;
+}
+
+export interface StaleSettings {
+  enabled: boolean;
+  staleAfterHours: 24 | 48 | 168 | 336;
+  graceMinutes: 30 | 60 | 120;
+  maxAutoClose: number;
+}
+
+// ============================================================================
+// Tab grouping
+// ============================================================================
+
+export type TabGroupColor =
+  | 'grey'
+  | 'blue'
+  | 'red'
+  | 'yellow'
+  | 'green'
+  | 'pink'
+  | 'purple'
+  | 'cyan'
+  | 'orange';
+
+export interface GroupRule {
+  id: string;
+  name: string;
+  enabled: boolean;
+  hostGlob: string;
+  groupTitle: string;
+  color: TabGroupColor;
+}
+
+export interface GroupSettings {
+  enabled: boolean;
+  mode: 'domain' | 'rules';
+  rules: GroupRule[];
+  collapseAfterMinutes: number;
+}
+
+// ============================================================================
+// Floating icon
+// ============================================================================
+
+export interface FloatingIconSettings {
+  enabled: boolean;
+}
+
+// ============================================================================
+// Command palette
+// ============================================================================
+
+export interface CommandPaletteSettings {
+  enabled: boolean;
+  includeHistory: boolean;
+  includeBookmarks: boolean;
+  maxResults: number;
+}
+
+// ============================================================================
+// Tab activity tracking (local storage)
+// ============================================================================
+
+export type TabActivityMap = Record<number, number>;
+
+// ============================================================================
+// Stale notification tracking (local storage)
+// ============================================================================
+
+export type StaleNotifiedMap = Record<number, number>;
+
+// ============================================================================
 // Settings (sync storage)
 // ============================================================================
 
 export interface Settings {
-  schemaVersion: 1;
+  schemaVersion: 3;
   dedup: {
     globalEnabled: boolean;
     disabledHosts: string[];
@@ -148,6 +228,11 @@ export interface Settings {
     repoMutes: string[];
     oauthClientId?: string;
   };
+  suspend: SuspendSettings;
+  stale: StaleSettings;
+  groups: GroupSettings;
+  floatingIcon: FloatingIconSettings;
+  commandPalette: CommandPaletteSettings;
 }
 
 // ============================================================================

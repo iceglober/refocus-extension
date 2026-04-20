@@ -1,4 +1,13 @@
-import type { PrEventKind, Rule, Settings } from './types';
+import type {
+  CommandPaletteSettings,
+  FloatingIconSettings,
+  GroupSettings,
+  PrEventKind,
+  Rule,
+  Settings,
+  StaleSettings,
+  SuspendSettings,
+} from './types';
 
 export const DEFAULT_RULES: Rule[] = [
   {
@@ -42,8 +51,40 @@ const DEFAULT_NOTIFY_ON: Record<PrEventKind, boolean> = {
   mention: true,
 };
 
+export const DEFAULT_SUSPEND: SuspendSettings = {
+  enabled: false,
+  idleMinutes: 30,
+  exemptHosts: [],
+  suspendPinned: false,
+};
+
+export const DEFAULT_STALE: StaleSettings = {
+  enabled: false,
+  staleAfterHours: 48,
+  graceMinutes: 60,
+  maxAutoClose: 5,
+};
+
+export const DEFAULT_GROUPS: GroupSettings = {
+  enabled: false,
+  mode: 'domain',
+  rules: [],
+  collapseAfterMinutes: 0,
+};
+
+export const DEFAULT_FLOATING_ICON: FloatingIconSettings = {
+  enabled: false,
+};
+
+export const DEFAULT_COMMAND_PALETTE: CommandPaletteSettings = {
+  enabled: true,
+  includeHistory: true,
+  includeBookmarks: true,
+  maxResults: 8,
+};
+
 export const DEFAULT_SETTINGS: Settings = {
-  schemaVersion: 1,
+  schemaVersion: 3,
   dedup: {
     globalEnabled: true,
     disabledHosts: [],
@@ -51,7 +92,7 @@ export const DEFAULT_SETTINGS: Settings = {
     addressBarDedup: false,
   },
   watch: {
-    enabled: false, // opt-in; Watch requires auth
+    enabled: false,
     apiBaseUrl: 'https://api.github.com',
     pollIntervalSec: 30,
     autoTargets: {
@@ -63,4 +104,9 @@ export const DEFAULT_SETTINGS: Settings = {
     notifyOn: DEFAULT_NOTIFY_ON,
     repoMutes: [],
   },
+  suspend: DEFAULT_SUSPEND,
+  stale: DEFAULT_STALE,
+  groups: DEFAULT_GROUPS,
+  floatingIcon: DEFAULT_FLOATING_ICON,
+  commandPalette: DEFAULT_COMMAND_PALETTE,
 };

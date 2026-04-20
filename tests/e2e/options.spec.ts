@@ -10,7 +10,7 @@ test('options page renders with all panes', async ({ context, extensionId }) => 
   await page.goto(`chrome-extension://${extensionId}/options.html`);
 
   await expect(page.locator('header h1')).toHaveText('Refocus');
-  await expect(page.locator('#tabs button')).toHaveCount(6);
+  await expect(page.locator('#tabs button')).toHaveCount(9);
   await expect(page.locator('#pane-rules h2').first()).toHaveText('Dedup Rules');
 });
 
