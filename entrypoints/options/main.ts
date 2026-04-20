@@ -1,6 +1,7 @@
 import { settingsStore } from '@/utils/storage';
 import type { Settings } from '@/utils/types';
 import { renderAccountPane } from './panes/account';
+import { renderCommandPalettePane } from './panes/commandPalette';
 import { renderGroupsPane } from './panes/groups';
 import { renderHostsPane } from './panes/hosts';
 import { renderImportExportPane } from './panes/importExport';
@@ -20,6 +21,7 @@ const PANES: Record<string, Renderer> = {
   suspend: renderSuspendPane,
   stale: renderStalePane,
   groups: renderGroupsPane,
+  'command-palette': renderCommandPalettePane,
   account: renderAccountPane,
   'import-export': renderImportExportPane,
 };

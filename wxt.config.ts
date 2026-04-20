@@ -14,10 +14,21 @@ export default defineConfig({
       'webNavigation',
       'tabGroups',
       'sidePanel',
+      'history',
+      'bookmarks',
     ],
     host_permissions: ['https://api.github.com/*'],
     optional_host_permissions: ['https://*/*'],
     minimum_chrome_version: '110',
+    commands: {
+      'open-command-palette': {
+        suggested_key: {
+          default: 'Ctrl+Period',
+          mac: 'Command+Period',
+        },
+        description: 'Open Refocus command palette',
+      },
+    },
   },
   srcDir: '.',
 });

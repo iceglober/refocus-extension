@@ -1,4 +1,5 @@
 import type {
+  CommandPaletteSettings,
   FloatingIconSettings,
   GroupSettings,
   PrEventKind,
@@ -75,8 +76,15 @@ export const DEFAULT_FLOATING_ICON: FloatingIconSettings = {
   enabled: false,
 };
 
+export const DEFAULT_COMMAND_PALETTE: CommandPaletteSettings = {
+  enabled: true,
+  includeHistory: true,
+  includeBookmarks: true,
+  maxResults: 8,
+};
+
 export const DEFAULT_SETTINGS: Settings = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   dedup: {
     globalEnabled: true,
     disabledHosts: [],
@@ -100,4 +108,5 @@ export const DEFAULT_SETTINGS: Settings = {
   stale: DEFAULT_STALE,
   groups: DEFAULT_GROUPS,
   floatingIcon: DEFAULT_FLOATING_ICON,
+  commandPalette: DEFAULT_COMMAND_PALETTE,
 };

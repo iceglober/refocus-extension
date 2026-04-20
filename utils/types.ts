@@ -180,6 +180,17 @@ export interface FloatingIconSettings {
 }
 
 // ============================================================================
+// Command palette
+// ============================================================================
+
+export interface CommandPaletteSettings {
+  enabled: boolean;
+  includeHistory: boolean;
+  includeBookmarks: boolean;
+  maxResults: number;
+}
+
+// ============================================================================
 // Tab activity tracking (local storage)
 // ============================================================================
 
@@ -196,7 +207,7 @@ export type StaleNotifiedMap = Record<number, number>;
 // ============================================================================
 
 export interface Settings {
-  schemaVersion: 2;
+  schemaVersion: 3;
   dedup: {
     globalEnabled: boolean;
     disabledHosts: string[];
@@ -221,6 +232,7 @@ export interface Settings {
   stale: StaleSettings;
   groups: GroupSettings;
   floatingIcon: FloatingIconSettings;
+  commandPalette: CommandPaletteSettings;
 }
 
 // ============================================================================

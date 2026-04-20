@@ -1,11 +1,6 @@
 import { storage } from 'wxt/storage';
-import {
-  DEFAULT_FLOATING_ICON,
-  DEFAULT_GROUPS,
-  DEFAULT_SETTINGS,
-  DEFAULT_STALE,
-  DEFAULT_SUSPEND,
-} from './defaults';
+import { DEFAULT_SETTINGS } from './defaults';
+import { SETTINGS_MIGRATIONS } from './migrations';
 import type {
   Auth,
   PrStateMap,
@@ -16,17 +11,8 @@ import type {
 
 export const settingsStore = storage.defineItem<Settings>('sync:settings', {
   fallback: DEFAULT_SETTINGS,
-  version: 2,
-  migrations: {
-    2: (prev: Record<string, unknown>) => ({
-      ...prev,
-      schemaVersion: 2,
-      suspend: prev.suspend ?? DEFAULT_SUSPEND,
-      stale: prev.stale ?? DEFAULT_STALE,
-      groups: prev.groups ?? DEFAULT_GROUPS,
-      floatingIcon: prev.floatingIcon ?? DEFAULT_FLOATING_ICON,
-    }),
-  },
+  version: 3,
+  migrations: SETTINGS_MIGRATIONS,
 });
 
 export const authStore = storage.defineItem<Auth>('local:auth', {
